@@ -21,15 +21,15 @@ class VagrantController(AttackRangeController):
 
     def download_files(self):
         print("Downloading all files required by the Splunk VM")
-
-        if os.path.isfile("terraform/ansible/roles/splunk_server/files/downloading.tmp"):
+        path = "terraform/ansible/roles/splunk_server/files"
+        if os.path.isfile(path+"/downloading.tmp"):
             print("Found tmp file, deleting...")
-            os.remove("terraform/ansible/roles/splunk_server/files/downloading.tmp")
+            os.remove(path+"/downloading.tmp")
 
-        if not os.path.isfile("terraform/ansible/roles/splunk_server/files/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz"):
+        if not os.path.isfile(path+"/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz"):
             print("Downloading Splunk")
-            urlretrieve("https://download.splunk.com/products/splunk/releases/9.3.0/linux/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz", "terraform/ansible/roles/splunk_server/files/downloading.tmp")
-            os.rename("terraform/ansible/roles/splunk_server/files/downloading.tmp", "terraform/ansible/roles/splunk_server/files/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz")
+            urlretrieve("https://download.splunk.com/products/splunk/releases/9.3.0/linux/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz", path+"/downloading.tmp")
+            os.rename(path+"/downloading.tmp", path+"/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz")
             print("Download done")
         file = open("splunk_files.txt", "r")
         while True:
@@ -38,10 +38,10 @@ class VagrantController(AttackRangeController):
                 break
             else:
                 name = line.split("https://attack-range-appbinaries.s3-us-west-2.amazonaws.com/")[1].removesuffix("\n")
-                if not os.path.isfile("terraform/ansible/roles/splunk_server/files/"+name):
+                if not os.path.isfile(path+"/"+name):
                     print("Downloading "+name)
-                    urlretrieve(line, "terraform/ansible/roles/splunk_server/files/downloading.tmp")
-                    os.rename("terraform/ansible/roles/splunk_server/files/downloading.tmp", "terraform/ansible/roles/splunk_server/files/"+name)
+                    urlretrieve(line, path+"/downloading.tmp")
+                    os.rename(path+"/downloading.tmp", path+"/"+name)
                     print("Download done")
         file.close()
         print("All files required for the Splunk VM downloaded")
