@@ -1,8 +1,8 @@
 ---
 
-- name: download {{ item }} from S3 bucket
-  get_url:
-    url: '{{ splunk_server.s3_bucket_url }}/{{ item }}'
+- name: copy {{ item }} from local machine to remote
+  copy:
+    src: '{{ item }}'
     dest: /tmp/{{ item }}
 
 - name: Install {{ item }} via REST

@@ -12,11 +12,39 @@ from modules.attack_range_controller import AttackRangeController
 from modules.art_simulation_controller import ArtSimulationController
 from modules.purplesharp_simulation_controller import PurplesharpSimulationController
 
+from urllib.request import urlretrieve
 
 class VagrantController(AttackRangeController):
 
     def __init__(self, config: dict):
         super().__init__(config)
+
+    def download_files(self):
+        print("Downloading all files required by the Splunk VM")
+
+        if os.path.isfile("terraform/ansible/roles/splunk_server/files/downloading.tmp"):
+            print("Found tmp file, deleting...")
+            os.remove("terraform/ansible/roles/splunk_server/files/downloading.tmp")
+
+        if not os.path.isfile("terraform/ansible/roles/splunk_server/files/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz"):
+            print("Downloading Splunk")
+            urlretrieve("https://download.splunk.com/products/splunk/releases/9.3.0/linux/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz", "terraform/ansible/roles/splunk_server/files/downloading.tmp")
+            os.rename("terraform/ansible/roles/splunk_server/files/downloading.tmp", "terraform/ansible/roles/splunk_server/files/splunk-9.3.0-51ccf43db5bd-Linux-x86_64.tgz")
+            print("Download done")
+        file = open("splunk_files.txt", "r")
+        while True:
+            line = file.readline()
+            if not line:
+                break
+            else:
+                name = line.split("https://attack-range-appbinaries.s3-us-west-2.amazonaws.com/")[1].removesuffix("\n")
+                if not os.path.isfile("terraform/ansible/roles/splunk_server/files/"+name):
+                    print("Downloading "+name)
+                    urlretrieve(line, "terraform/ansible/roles/splunk_server/files/downloading.tmp")
+                    os.rename("terraform/ansible/roles/splunk_server/files/downloading.tmp", "terraform/ansible/roles/splunk_server/files/"+name)
+                    print("Download done")
+        file.close()
+        print("All files required for the Splunk VM downloaded")
 
     def build(self) -> None:
 
@@ -47,6 +75,7 @@ class VagrantController(AttackRangeController):
             file.write(vagrantfile)
         
         v1 = vagrant.Vagrant('vagrant/', quiet_stdout=False, quiet_stderr=False)
+        self.download_files()
         try:
             v1.up(provision=True, provider="virtualbox")
         except:
